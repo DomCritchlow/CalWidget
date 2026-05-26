@@ -6,27 +6,38 @@
 //
 
 import SwiftUI
-import SwiftData
 
 @main
 struct CalWidgetApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+    @StateObject private var calendarStore = CalendarStore()
+    private let updaterCoordinator = UpdaterCoordinator()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(calendarStore)
+                .background(
+                    WindowAccessor { window in
+                        WindowStyleCoordinator.apply(to: window)
+                    }
+                )
         }
-        .modelContainer(sharedModelContainer)
+        .defaultSize(width: 320, height: 900)
+        .windowResizability(.contentSize)
+        .commands {
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") {
+                    updaterCoordinator.checkForUpdates()
+                }
+                .disabled(!updaterCoordinator.canCheckForUpdates)
+            }
+            CommandGroup(replacing: .newItem) { }
+            CommandGroup(replacing: .windowArrangement) { }
+        }
+
+        Settings {
+            SettingsView()
+                .environmentObject(calendarStore)
+        }
     }
 }

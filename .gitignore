@@ -1,0 +1,23 @@
+# Build artifacts
+dist/
+build/
+DerivedData/
+*.xcarchive
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+
+# Swift Package Manager local state
+.swiftpm/
+.build/
+Package.resolved
+
+# macOS
+.DS_Store
+
+# Sparkle private keys — these MUST NEVER be committed
+*.pem
+*-private.key
+sparkle-private*
