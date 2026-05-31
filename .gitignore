@@ -3,6 +3,7 @@ dist/
 build/
 DerivedData/
 *.xcarchive
+*-release.log
 
 # Xcode user state
 xcuserdata/
