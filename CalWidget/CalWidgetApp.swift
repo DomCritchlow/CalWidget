@@ -7,13 +7,17 @@
 
 import SwiftUI
 
+private enum WindowID {
+    static let rail = "rail"
+}
+
 @main
 struct CalWidgetApp: App {
     @StateObject private var calendarStore = CalendarStore()
     private let updaterCoordinator = UpdaterCoordinator()
 
     var body: some Scene {
-        WindowGroup {
+        Window("CalWidget", id: WindowID.rail) {
             ContentView()
                 .environmentObject(calendarStore)
                 .background(
@@ -24,20 +28,29 @@ struct CalWidgetApp: App {
         }
         .defaultSize(width: 320, height: 900)
         .windowResizability(.contentSize)
-        .commands {
-            CommandGroup(after: .appInfo) {
-                Button("Check for Updates…") {
-                    updaterCoordinator.checkForUpdates()
-                }
-                .disabled(!updaterCoordinator.canCheckForUpdates)
-            }
-            CommandGroup(replacing: .newItem) { }
-            CommandGroup(replacing: .windowArrangement) { }
-        }
 
         Settings {
             SettingsView()
                 .environmentObject(calendarStore)
         }
+
+        MenuBarExtra {
+            MenuBarContentBridge(updaterCoordinator: updaterCoordinator)
+        } label: {
+            Image(systemName: "calendar")
+        }
+    }
+}
+
+// Bridge view so MenuBarContent can use `openWindow` from the environment.
+private struct MenuBarContentBridge: View {
+    let updaterCoordinator: UpdaterCoordinator
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        MenuBarContent(
+            updaterCoordinator: updaterCoordinator,
+            openWindow: { openWindow(id: WindowID.rail) }
+        )
     }
 }

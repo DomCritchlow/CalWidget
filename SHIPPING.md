@@ -12,12 +12,20 @@ You do these once per machine. After that, every release is a tag push.
 The EdDSA key signs every release so users only auto-install builds that came
 from you, even if your appcast or DMG host is compromised.
 
+Fetch Sparkle's helper tools into `vendor/Sparkle/` (same layout CI uses, and
+where [scripts/release.sh](scripts/release.sh) looks for them). The brew cask
+is **not** recommended — it ships the binaries with `com.apple.quarantine`,
+so Gatekeeper flags `generate_keys` as malware on first run.
+
 ```sh
-# Install Sparkle's helper tools — required for generate_keys / generate_appcast.
-brew install --cask sparkle
+SPARKLE_VERSION="2.6.4"
+curl -L "https://github.com/sparkle-project/Sparkle/releases/download/$SPARKLE_VERSION/Sparkle-$SPARKLE_VERSION.tar.xz" \
+    -o /tmp/sparkle.tar.xz
+mkdir -p vendor/Sparkle
+tar -xf /tmp/sparkle.tar.xz -C vendor/Sparkle
 
 # Generates the key, stores private in Keychain, prints the public to stdout.
-generate_keys
+vendor/Sparkle/bin/generate_keys
 ```
 
 Copy the printed public key into `CalWidget.xcodeproj/project.pbxproj`,
@@ -27,7 +35,7 @@ replacing `REPLACE_WITH_YOUR_SPARKLE_PUBLIC_KEY` in the
 Export the private key to a file so `release.sh` (and CI) can sign appcasts:
 
 ```sh
-generate_keys -x ~/.calwidget-sparkle-private.key
+vendor/Sparkle/bin/generate_keys -x ~/.calwidget-sparkle-private.key
 chmod 600 ~/.calwidget-sparkle-private.key
 echo 'export SPARKLE_PRIVATE_KEY_FILE=~/.calwidget-sparkle-private.key' >> ~/.zshrc
 ```

@@ -3,25 +3,24 @@ import Foundation
 #if canImport(Sparkle)
 import Sparkle
 
-final class UpdaterCoordinator: NSObject, SPUUpdaterDelegate {
-    private let controller: SPUStandardUpdaterController
+final class UpdaterCoordinator {
+    private let controller: SPUStandardUpdaterController?
 
-    override init() {
-        controller = SPUStandardUpdaterController(
-            startingUpdater: true,
-            updaterDelegate: nil,
-            userDriverDelegate: nil
-        )
-        super.init()
-        controller.updater.delegate = self
+    init() {
+        // Sparkle refuses to start without an SUFeedURL in Info.plist, so skip
+        // initialization entirely in Debug builds (where we leave it unset).
+        let hasFeed = (Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") as? String)?.isEmpty == false
+        controller = hasFeed
+            ? SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+            : nil
     }
 
     var canCheckForUpdates: Bool {
-        controller.updater.canCheckForUpdates
+        controller?.updater.canCheckForUpdates ?? false
     }
 
     func checkForUpdates() {
-        controller.checkForUpdates(nil)
+        controller?.checkForUpdates(nil)
     }
 }
 #else

@@ -6,11 +6,12 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [1.0.0] - TBD
+## [1.0.0] - 2026-05-31
 
 ### Added
 - Day-rail timeline with current-time marker, lane-packed overlapping events
 - Apple Calendar / EventKit integration including Google calendars synced through macOS
+- Menu bar agent with quick access to the timeline window and Check for Updates
 - Calendar filtering in Settings
 - Configurable visible day range (start/end hour)
 - In-app event detail panel with meeting link detection (Meet, Zoom, Teams, Webex, GoToMeeting)

@@ -21,3 +21,6 @@ Package.resolved
 *.pem
 *-private.key
 sparkle-private*
+
+# Sparkle helper tools (downloaded by SHIPPING.md / CI)
+vendor/
