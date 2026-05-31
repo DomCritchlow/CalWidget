@@ -30,27 +30,8 @@ struct CalWidgetApp: App {
         .windowResizability(.contentSize)
 
         Settings {
-            SettingsView()
+            SettingsView(updaterCoordinator: updaterCoordinator)
                 .environmentObject(calendarStore)
         }
-
-        MenuBarExtra {
-            MenuBarContentBridge(updaterCoordinator: updaterCoordinator)
-        } label: {
-            Image(systemName: "calendar")
-        }
-    }
-}
-
-// Bridge view so MenuBarContent can use `openWindow` from the environment.
-private struct MenuBarContentBridge: View {
-    let updaterCoordinator: UpdaterCoordinator
-    @Environment(\.openWindow) private var openWindow
-
-    var body: some View {
-        MenuBarContent(
-            updaterCoordinator: updaterCoordinator,
-            openWindow: { openWindow(id: WindowID.rail) }
-        )
     }
 }

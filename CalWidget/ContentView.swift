@@ -46,6 +46,8 @@ struct ContentView: View {
                 } else {
                     CalendarAccessView()
                 }
+
+                SettingsFooter()
             }
 
             if let selectedEvent, enableEventLaunch {
@@ -141,6 +143,45 @@ private struct HeaderView: View {
             .frame(width: 22, alignment: .trailing)
         }
         .padding(.top, 2)
+    }
+}
+
+private struct SettingsFooter: View {
+    var body: some View {
+        HStack(spacing: 0) {
+            SettingsLink {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help("Settings")
+            // The app is a menu bar agent (LSUIElement / .accessory), so opening the
+            // Settings scene does not bring the app forward on its own. Activate
+            // explicitly — immediately and again after the window has been created —
+            // so the Settings window becomes key and accepts edits.
+            .simultaneousGesture(
+                TapGesture().onEnded {
+                    activateApp()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        activateApp()
+                    }
+                }
+            )
+            .cursor(.pointingHand)
+
+            Spacer(minLength: 0)
+        }
+        .padding(.top, 2)
+    }
+
+    private func activateApp() {
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.windows
+            .first { $0.title == "Settings" || $0.identifier?.rawValue == "com_apple_SwiftUI_Settings_window" }?
+            .makeKeyAndOrderFront(nil)
     }
 }
 

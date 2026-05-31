@@ -5,6 +5,7 @@
 //  Created by Codex.
 //
 
+import AppKit
 import SwiftUI
 
 struct SettingsView: View {
@@ -24,6 +25,8 @@ struct SettingsView: View {
     private var colorModeRaw = ColorMode.status.rawValue
 
     @EnvironmentObject private var calendarStore: CalendarStore
+
+    let updaterCoordinator: UpdaterCoordinator
 
     private var formatting: TimeFormatting {
         TimeFormatting(use24Hour: use24HourTime)
@@ -156,6 +159,23 @@ struct SettingsView: View {
                         }
                     }
                 }
+
+                Divider()
+
+                Text("Application")
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+
+                HStack {
+                    Button("Check for Updates…") {
+                        updaterCoordinator.checkForUpdates()
+                    }
+                    .disabled(!updaterCoordinator.canCheckForUpdates)
+
+                    Button("Quit CalWidget") {
+                        NSApp.terminate(nil)
+                    }
+                }
+                .font(.system(size: 12, weight: .medium))
             }
             .padding(18)
         }
@@ -307,6 +327,6 @@ private enum TimeZoneCatalog {
 }
 
 #Preview {
-    SettingsView()
+    SettingsView(updaterCoordinator: UpdaterCoordinator())
         .environmentObject(CalendarStore())
 }
