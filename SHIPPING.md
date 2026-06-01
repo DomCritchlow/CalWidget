@@ -50,8 +50,11 @@ scripts/setup-signing.sh
 ```
 
 It will tell you whether your Developer ID Application cert is present, and
-print the exact `notarytool store-credentials` command to register an
-app-specific password under the keychain profile `calwidget-notary`.
+print the exact `notarytool store-credentials` command to register an **App
+Store Connect API key** under the keychain profile `calwidget-notary`. The
+signing account is a Managed Apple ID, which cannot use an app-specific
+password for notarization — use an API key (create one at App Store Connect →
+Users and Access → Integrations).
 
 ### 3. Point the appcast URL at your repo
 
@@ -119,8 +122,8 @@ It needs these repository secrets:
 | `SPARKLE_PRIVATE_KEY_BASE64` | `base64 -i ~/.calwidget-sparkle-private.key` |
 
 Notarization uses an **App Store Connect API key**, not an Apple ID + app-specific
-password — the signing account is a Managed Apple ID (@fractional.ai) and Managed
-Apple IDs cannot use app-specific passwords with `notarytool` (they 401). The
+password — the signing account is a Managed Apple ID, and Managed Apple IDs
+cannot use app-specific passwords with `notarytool` (they 401). The
 `.p8`, Key ID, and Issuer ID live in 1Password; create the key at App Store
 Connect → Users and Access → Integrations → App Store Connect API (Developer role).
 
@@ -154,3 +157,4 @@ Dominic Critchlow** + its private key (cmd-click both), right-click → Export
   The `#if canImport(Sparkle)` guard in `UpdaterCoordinator.swift` lets the
   project build even if Sparkle is temporarily unavailable; Check for
   Updates is a no-op in that case.
+

@@ -18,8 +18,12 @@ current-time marker.
 
 The app is signed with a Developer ID and notarized by Apple, so you should
 not see any "unidentified developer" warning. Updates are delivered in-app
-through Sparkle; you can also check manually via **CalWidget → Check for
+through Sparkle; you can also check manually in **Settings → Check for
 Updates…**.
+
+> **Heads up:** CalWidget runs as a desktop widget with **no Dock icon**. If you
+> close its window, bring it back by launching CalWidget again from Spotlight or
+> your Applications folder.
 
 ### Homebrew
 
@@ -36,7 +40,8 @@ Updates…**.
 
 ## Settings
 
-Open the app's Settings window (`⌘,`) to configure:
+Open the app's Settings window — the gear button at the top of the rail, or
+`⌘,` while CalWidget is focused — to configure:
 
 - Visible start and end hours
 - 12- or 24-hour time
@@ -56,13 +61,13 @@ open CalWidget.xcodeproj
 
 Then build the `CalWidget` target in Xcode 16 or newer. Sparkle is already
 wired in as a Swift Package dependency, so in-app updates work in Release
-builds out of the box. The `Check for Updates…` menu item uses it.
+builds out of the box. The `Check for Updates…` button in Settings uses it.
 
 ## Project layout
 
 | Path | Purpose |
 |---|---|
-| [CalWidget/CalWidgetApp.swift](CalWidget/CalWidgetApp.swift) | App entry point, scenes, menu commands |
+| [CalWidget/CalWidgetApp.swift](CalWidget/CalWidgetApp.swift) | App entry point and scenes (rail window + Settings) |
 | [CalWidget/ContentView.swift](CalWidget/ContentView.swift) | Timeline UI and event detail overlay |
 | [CalWidget/CalendarStore.swift](CalWidget/CalendarStore.swift) | EventKit integration, event shaping, lane layout |
 | [CalWidget/SettingsView.swift](CalWidget/SettingsView.swift) | Settings window |
