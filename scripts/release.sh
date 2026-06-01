@@ -4,12 +4,15 @@
 #
 # Requirements (set up once via scripts/setup-signing.sh):
 #   - "Developer ID Application" certificate in the login keychain
-#   - notarytool credential profile named "calwidget-notary"
+#   - notarytool credential profile named "calwidget-notary".
+#     This account (a Managed Apple ID) must use an App Store Connect API key,
+#     not an app-specific password:
 #       xcrun notarytool store-credentials calwidget-notary \
-#           --apple-id "you@example.com" --team-id WYU5QYFS2X --password "app-specific-password"
-#   - Sparkle generate_appcast tool on PATH or in ./vendor/Sparkle/bin/
+#           --key AuthKey_XXXX.p8 --key-id XXXX --issuer <issuer-uuid>
+#   - Sparkle sign_update tool on PATH or in ./vendor/Sparkle/bin/
 #   - SPARKLE_PRIVATE_KEY_FILE env var pointing at the EdDSA private key file
-#     (generated once with `generate_keys` from Sparkle; never commit)
+#     (generated once with `generate_keys` from Sparkle; never commit). If unset,
+#     sign_update falls back to the key stored in the Keychain.
 #
 # Usage:
 #   scripts/release.sh           # uses MARKETING_VERSION from pbxproj
@@ -114,30 +117,53 @@ xcrun stapler staple "$DMG_PATH"
 
 echo "==> Updating appcast"
 APPCAST="$ROOT/appcast.xml"
-RELEASES="$DIST/releases"
-mkdir -p "$RELEASES"
-cp "$DMG_PATH" "$RELEASES/"
+DOWNLOAD_URL="https://github.com/domcritchlow/CalWidget/releases/download/v$VERSION/$APP_NAME-$VERSION.dmg"
 
-if command -v generate_appcast >/dev/null 2>&1; then
-    GENERATE_APPCAST="generate_appcast"
-elif [[ -x "$ROOT/vendor/Sparkle/bin/generate_appcast" ]]; then
-    GENERATE_APPCAST="$ROOT/vendor/Sparkle/bin/generate_appcast"
+# We sign the DMG directly with sign_update rather than relying on
+# generate_appcast: that tool (Sparkle 2.6.4) does NOT embed sparkle:edSignature
+# for DMGs and appends a duplicate <item> when the build number changes. Since
+# Sparkle only needs the latest version's entry, we emit a single signed item.
+if command -v sign_update >/dev/null 2>&1; then
+    SIGN_UPDATE="sign_update"
+elif [[ -x "$ROOT/vendor/Sparkle/bin/sign_update" ]]; then
+    SIGN_UPDATE="$ROOT/vendor/Sparkle/bin/sign_update"
 else
-    echo "!! generate_appcast not found. Skipping appcast update."
-    echo "   Install Sparkle's helper tools and place them at vendor/Sparkle/bin/."
-    GENERATE_APPCAST=""
+    echo "!! sign_update not found (expected on PATH or vendor/Sparkle/bin/)." >&2
+    echo "   Cannot sign the appcast; aborting so we never publish an unsigned update." >&2
+    exit 1
 fi
 
-if [[ -n "$GENERATE_APPCAST" ]]; then
-    if [[ -z "${SPARKLE_PRIVATE_KEY_FILE:-}" ]]; then
-        echo "!! SPARKLE_PRIVATE_KEY_FILE not set; appcast will not be signed."
-    fi
-    "$GENERATE_APPCAST" \
-        --download-url-prefix "https://github.com/domcritchlow/CalWidget/releases/download/v$VERSION/" \
-        ${SPARKLE_PRIVATE_KEY_FILE:+--ed-key-file "$SPARKLE_PRIVATE_KEY_FILE"} \
-        -o "$APPCAST" \
-        "$RELEASES"
+# Prints: sparkle:edSignature="..." length="..."  — embedded verbatim below.
+# With SPARKLE_PRIVATE_KEY_FILE set it uses that key; otherwise the Keychain.
+SIG_AND_LENGTH="$("$SIGN_UPDATE" "$DMG_PATH" ${SPARKLE_PRIVATE_KEY_FILE:+--ed-key-file "$SPARKLE_PRIVATE_KEY_FILE"})"
+if [[ "$SIG_AND_LENGTH" != *edSignature* ]]; then
+    echo "!! sign_update did not return a signature. Aborting." >&2
+    exit 1
 fi
+
+PUB_DATE="$(date "+%a, %d %b %Y %H:%M:%S %z")"
+
+cat > "$APPCAST" <<EOF
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0">
+    <channel>
+        <title>CalWidget</title>
+        <link>https://raw.githubusercontent.com/domcritchlow/CalWidget/main/appcast.xml</link>
+        <description>Most recent CalWidget updates.</description>
+        <language>en</language>
+        <item>
+            <title>$VERSION</title>
+            <pubDate>$PUB_DATE</pubDate>
+            <sparkle:version>$BUILD</sparkle:version>
+            <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="$DOWNLOAD_URL" $SIG_AND_LENGTH type="application/octet-stream"/>
+        </item>
+    </channel>
+</rss>
+EOF
+
+echo "    Signed appcast item written for $VERSION (build $BUILD)."
 
 echo ""
 echo "==> Done."

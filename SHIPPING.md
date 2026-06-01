@@ -74,8 +74,9 @@ scripts/release.sh 1.0.0
 2. Export the .app via `developer-id` method
 3. Submit `.app` to Apple notary service, wait for ticket, staple
 4. Build a UDZO DMG, sign it, notarize it, staple it
-5. Run Sparkle's `generate_appcast` against `dist/releases/` and update
-   `appcast.xml` with the new entry signed by your EdDSA key
+5. Sign the DMG with Sparkle's `sign_update` and rewrite `appcast.xml` as a
+   single signed `<item>` for this version (we don't use `generate_appcast` —
+   in Sparkle 2.6.4 it omits the EdDSA signature for DMGs)
 
 Final artifacts land in `dist/`:
 
@@ -109,17 +110,24 @@ It needs these repository secrets:
 
 | Secret | What it is |
 |---|---|
-| `DEVELOPER_ID_CERT_P12_BASE64` | `base64 < DeveloperID.p12` of your exported cert + private key |
+| `DEVELOPER_ID_CERT_P12_BASE64` | `base64 -i DeveloperID.p12` of your exported cert + private key |
 | `DEVELOPER_ID_CERT_PASSWORD` | Password set when exporting the .p12 |
 | `KEYCHAIN_PASSWORD` | Any string — used to lock the temporary keychain on the runner |
-| `APPLE_ID` | Your Apple ID email |
-| `APPLE_TEAM_ID` | `WYU5QYFS2X` |
-| `APPLE_APP_PASSWORD` | App-specific password from appleid.apple.com |
-| `SPARKLE_PRIVATE_KEY_BASE64` | `base64 < ~/.calwidget-sparkle-private.key` |
+| `ASC_API_KEY_P8_BASE64` | `base64 -i AuthKey_XXXX.p8` of your App Store Connect API key |
+| `ASC_API_KEY_ID` | The 10-char Key ID for that API key |
+| `ASC_API_ISSUER_ID` | The Issuer ID (UUID) from App Store Connect → Integrations |
+| `SPARKLE_PRIVATE_KEY_BASE64` | `base64 -i ~/.calwidget-sparkle-private.key` |
+
+Notarization uses an **App Store Connect API key**, not an Apple ID + app-specific
+password — the signing account is a Managed Apple ID (@fractional.ai) and Managed
+Apple IDs cannot use app-specific passwords with `notarytool` (they 401). The
+`.p8`, Key ID, and Issuer ID live in 1Password; create the key at App Store
+Connect → Users and Access → Integrations → App Store Connect API (Developer role).
 
 To export the cert from Keychain Access: select **Developer ID Application:
 Dominic Critchlow** + its private key (cmd-click both), right-click → Export
-Items → `.p12` format.
+2 items → `.p12` format. The team ID (`WYU5QYFS2X`) is hardcoded in
+`scripts/release.sh`, so it is not a secret.
 
 ## Common gotchas
 
@@ -134,7 +142,13 @@ Items → `.p12` format.
 - **Sparkle update fails with "signature does not match"** → the
   `SUPublicEDKey` in the *installed* version doesn't match the private key
   that signed the appcast. Users on old builds won't auto-update to the new
-  signing key; they have to manually re-download once.
+  signing key; they have to manually re-download once. Confirm the keys line
+  up: `vendor/Sparkle/bin/generate_keys -p` must equal `INFOPLIST_KEY_SUPublicEDKey`.
+- **Update silently never appears / appcast `<enclosure>` has no
+  `sparkle:edSignature`** → an unsigned appcast got published. `release.sh`
+  aborts rather than publish unsigned, but if you hand-edit, verify with
+  `grep edSignature appcast.xml`. Do **not** use `generate_appcast` here — it
+  drops the signature for DMGs in our Sparkle version.
 - **Build error: `No such module 'Sparkle'`** → SPM dependencies didn't
   resolve. Run `xcodebuild -resolvePackageDependencies` from the repo root.
   The `#if canImport(Sparkle)` guard in `UpdaterCoordinator.swift` lets the
