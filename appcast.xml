@@ -8,10 +8,10 @@
         <item>
             <title>1.0.0</title>
             <pubDate>Sun, 31 May 2026 19:44:45 -0400</pubDate>
-            <sparkle:version>202605311918</sparkle:version>
+            <sparkle:version>202605311956</sparkle:version>
             <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/domcritchlow/CalWidget/releases/download/v1.0.0/CalWidget-1.0.0.dmg" length="1849914" type="application/octet-stream"/>
+            <enclosure url="https://github.com/domcritchlow/CalWidget/releases/download/v1.0.0/CalWidget-1.0.0.dmg" sparkle:edSignature="PusIqtY5hIIIzE1zVoIdex034/K0d0uH4yg4Mh+7KEAIRbYfVaOT4gPktIKipAE/a9zySoHFjtAE8HfwnIfzDg==" length="1850960" type="application/octet-stream"/>
         </item>
     </channel>
 </rss>

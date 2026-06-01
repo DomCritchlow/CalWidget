@@ -11,7 +11,7 @@ uses [Semantic Versioning](https://semver.org/).
 ### Added
 - Day-rail timeline with current-time marker, lane-packed overlapping events
 - Apple Calendar / EventKit integration including Google calendars synced through macOS
-- Menu bar agent with quick access to the timeline window and Check for Updates
+- Runs as a lightweight desktop agent (no Dock icon); Settings, Check for Updates, and Quit available from the in-app Settings panel
 - Calendar filtering in Settings
 - Configurable visible day range (start/end hour)
 - In-app event detail panel with meeting link detection (Meet, Zoom, Teams, Webex, GoToMeeting)
